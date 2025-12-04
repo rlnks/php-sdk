@@ -42,7 +42,7 @@ use Rlnks\Resources\Webhooks;
 class Client
 {
     public const VERSION = '1.0.0';
-    public const DEFAULT_BASE_URL = 'https://api.rlnks.com';
+    public const DEFAULT_BASE_URL = 'https://app.rlnks.com/api/v1';
 
     protected HttpClient $http;
 
@@ -91,7 +91,7 @@ class Client
      *
      * @param string $apiKey Your RLNKS API key (starts with 'rlnks_')
      * @param array $options Configuration options:
-     *                       - base_url: API base URL (default: https://api.rlnks.com)
+     *                       - base_url: API base URL (default: https://app.rlnks.com/api/v1)
      *                       - timeout: Request timeout in seconds (default: 30)
      *                       - connect_timeout: Connection timeout in seconds (default: 10)
      *                       - guzzle: Additional Guzzle options

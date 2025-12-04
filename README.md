@@ -45,9 +45,9 @@ $client = new Client('rlnks_your_api_key');
 
 // You can also specify custom options
 $client = new Client('rlnks_your_api_key', [
-    'base_url' => 'https://api.rlnks.com',  // Custom base URL
-    'timeout' => 30,                          // Request timeout in seconds
-    'connect_timeout' => 10,                  // Connection timeout
+    'base_url' => 'https://app.rlnks.com/api/v1',  // Custom base URL
+    'timeout' => 30,                                // Request timeout in seconds
+    'connect_timeout' => 10,                        // Connection timeout
 ]);
 ```
 
@@ -633,9 +633,9 @@ echo $tree->is_active;
 echo $tree->total_requests;
 
 // Methods
-echo $tree->getImageUrl();    // https://api.rlnks.com/i/{uuid}
-echo $tree->getRedirectUrl(); // https://api.rlnks.com/r/{uuid}
-echo $tree->getShortUrl();    // https://api.rlnks.com/go/{code}
+echo $tree->getImageUrl();    // https://app.rlnks.com/i/{uuid}
+echo $tree->getRedirectUrl(); // https://app.rlnks.com/r/{uuid}
+echo $tree->getShortUrl();    // https://app.rlnks.com/go/{code}
 
 $tree->isImageTree();    // true/false
 $tree->isRedirectTree(); // true/false

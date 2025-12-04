@@ -32,7 +32,7 @@ class HttpClient
 
     public function __construct(
         string $apiKey,
-        string $baseUrl = 'https://api.rlnks.com',
+        string $baseUrl = 'https://app.rlnks.com/api/v1',
         array $options = []
     ) {
         $this->apiKey = $apiKey;
