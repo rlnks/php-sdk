@@ -16,6 +16,8 @@ use DateTimeImmutable;
  * @property string $short_code Short code for URLs
  * @property string|null $url_slug Custom URL slug
  * @property string|null $url_extension Custom URL extension (e.g., 'jpg', 'png')
+ * @property int|null $custom_domain_id Custom domain ID
+ * @property array|null $custom_domain Custom domain details (id, domain, is_default)
  * @property bool $is_active Whether tree is active
  * @property bool $is_archived Whether tree is archived
  * @property array $tree_data Decision tree structure (only in detailed view)
@@ -91,5 +93,21 @@ class Tree extends Model
     public function getLastRequestAt(): ?DateTimeImmutable
     {
         return $this->last_request_at ? new DateTimeImmutable($this->last_request_at) : null;
+    }
+
+    /**
+     * Check if tree has a custom domain.
+     */
+    public function hasCustomDomain(): bool
+    {
+        return $this->custom_domain !== null;
+    }
+
+    /**
+     * Get the custom domain name.
+     */
+    public function getCustomDomainName(): ?string
+    {
+        return $this->custom_domain['domain'] ?? null;
     }
 }

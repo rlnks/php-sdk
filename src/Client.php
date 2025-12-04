@@ -7,6 +7,7 @@ namespace Rlnks;
 use Rlnks\Http\HttpClient;
 use Rlnks\Resources\Account;
 use Rlnks\Resources\Analytics;
+use Rlnks\Resources\CustomDomains;
 use Rlnks\Resources\DeviceReports;
 use Rlnks\Resources\Images;
 use Rlnks\Resources\Trees;
@@ -81,6 +82,11 @@ class Client
     public TreeVariables $treeVariables;
 
     /**
+     * Custom Domains resource.
+     */
+    public CustomDomains $customDomains;
+
+    /**
      * Create a new RLNKS client instance.
      *
      * @param string $apiKey Your RLNKS API key (starts with 'rlnks_')
@@ -103,6 +109,7 @@ class Client
         $this->webhooks = new Webhooks($this->http);
         $this->account = new Account($this->http);
         $this->deviceReports = new DeviceReports($this->http);
+        $this->customDomains = new CustomDomains($this->http);
     }
 
     /**
