@@ -9,6 +9,7 @@ use Rlnks\Resources\Account;
 use Rlnks\Resources\Analytics;
 use Rlnks\Resources\CustomDomains;
 use Rlnks\Resources\DeviceReports;
+use Rlnks\Resources\EphemeralLinks;
 use Rlnks\Resources\Images;
 use Rlnks\Resources\Trees;
 use Rlnks\Resources\TreeVariables;
@@ -87,6 +88,11 @@ class Client
     public CustomDomains $customDomains;
 
     /**
+     * Ephemeral/Test Links resource.
+     */
+    public EphemeralLinks $ephemeralLinks;
+
+    /**
      * Create a new RLNKS client instance.
      *
      * @param string $apiKey Your RLNKS API key (starts with 'rlnks_')
@@ -110,6 +116,7 @@ class Client
         $this->account = new Account($this->http);
         $this->deviceReports = new DeviceReports($this->http);
         $this->customDomains = new CustomDomains($this->http);
+        $this->ephemeralLinks = new EphemeralLinks($this->http);
     }
 
     /**

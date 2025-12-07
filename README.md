@@ -426,6 +426,260 @@ try {
 }
 ```
 
+## Custom Domains
+
+Serve your links from your own domain for white-label solutions and brand consistency.
+
+### List Domains
+
+```php
+$domains = $client->customDomains->list();
+
+foreach ($domains as $domain) {
+    echo "{$domain->domain}: {$domain->getStatusDescription()}\n";
+}
+
+// Get only active domains
+$activeDomains = $client->customDomains->getActive();
+
+// Get pending domains (awaiting verification or SSL)
+$pendingDomains = $client->customDomains->getPending();
+```
+
+### Add a Domain
+
+```php
+// Add a new custom domain
+$domain = $client->customDomains->create('links.example.com');
+
+// Get DNS setup instructions
+$instructions = $client->customDomains->getDnsInstructions($domain->id);
+
+echo "CNAME Target: " . $instructions['cname_target'] . "\n";
+echo "TXT Record Name: " . $instructions['txt_record_name'] . "\n";
+echo "TXT Record Value: " . $instructions['txt_record_value'] . "\n";
+
+// Or create with instructions in one call
+$result = $client->customDomains->createWithInstructions('links.example.com');
+$domain = $result['domain'];
+$instructions = $result['dns'];
+```
+
+### Verify and Activate
+
+```php
+// After configuring DNS records, verify the domain
+$domain = $client->customDomains->verify($domainId);
+
+// Check status
+if ($domain->isActive()) {
+    echo "Domain is active and ready to use!\n";
+} elseif ($domain->isPendingSsl()) {
+    echo "SSL certificate is being provisioned...\n";
+} elseif ($domain->hasSslError()) {
+    // Retry SSL provisioning
+    $domain = $client->customDomains->retrySsl($domainId);
+}
+```
+
+### Set Default Domain
+
+```php
+// Set as default for all trees
+$client->customDomains->setDefault($domainId);
+
+// Remove from defaults
+$client->customDomains->unsetDefault($domainId);
+
+// Get current default
+$default = $client->customDomains->getDefault();
+```
+
+### Check Availability
+
+```php
+if ($client->customDomains->checkAvailability('links.example.com')) {
+    echo "Domain is available!\n";
+}
+```
+
+### Delete a Domain
+
+```php
+$client->customDomains->delete($domainId);
+```
+
+## Ephemeral Links (Test Links)
+
+Create temporary links for testing decision trees without affecting production statistics.
+
+### Create Test Links
+
+```php
+// Create a test link for an image tree
+$link = $client->ephemeralLinks->create($treeId, [
+    'type' => 'image',
+    'expires_in_minutes' => 15, // 5-60 minutes
+    'max_uses' => 10,           // Optional: limit uses
+]);
+
+echo "Test URL: " . $link->getUrl() . "\n";
+echo "Expires: " . $link->getRemainingTime() . "\n";
+
+// Convenience methods
+$imageLink = $client->ephemeralLinks->createImageLink($treeId, 30); // 30 minutes
+$redirectLink = $client->ephemeralLinks->createRedirectLink($treeId);
+
+// Quick URL generation
+$url = $client->ephemeralLinks->createAndGetUrl($treeId, 'image', 15);
+```
+
+### Test with Variable Slugs
+
+Variable slugs allow testing different condition paths with a single tree.
+
+```php
+$link = $client->ephemeralLinks->createImageLink($treeId);
+
+// Test different conditions using the slug
+echo $link->getUrlWithSlug('logo');   // /test/i/{uuid}/logo
+echo $link->getUrlWithSlug('banner'); // /test/i/{uuid}/banner
+echo $link->getUrlWithSlug('header'); // /test/i/{uuid}/header
+
+// The slug is available in tree conditions as 'slug' field:
+// - slug equals "logo" -> Show logo image
+// - slug equals "banner" -> Show banner image
+```
+
+### List and Manage Links
+
+```php
+// List active links for a tree
+$links = $client->ephemeralLinks->list($treeId);
+
+// Include expired links
+$allLinks = $client->ephemeralLinks->list($treeId, ['include_expired' => true]);
+
+// Get only valid (non-expired) links
+$validLinks = $client->ephemeralLinks->getValid($treeId);
+
+// Get a specific link
+$link = $client->ephemeralLinks->get($linkUuid);
+
+// Delete a link
+$client->ephemeralLinks->delete($linkUuid);
+
+// Clean up expired links
+$deletedCount = $client->ephemeralLinks->deleteExpired($treeId);
+echo "Deleted {$deletedCount} expired links\n";
+```
+
+### Link Properties
+
+```php
+$link = $client->ephemeralLinks->get($linkUuid);
+
+// Check status
+$link->isValid();      // Still usable?
+$link->isExpired();    // Time expired?
+$link->hasUseLimit();  // Has max uses?
+
+// Usage info
+$link->use_count;          // Current uses
+$link->getRemainingUses(); // Uses left (null if unlimited)
+$link->getRemainingTime(); // "5 minutes from now"
+
+// Type
+$link->isImageLink();    // true/false
+$link->isRedirectLink(); // true/false
+```
+
+## Variable Slugs in Tree Conditions
+
+Variable slugs enable condition-based routing with a single URL. This allows one tree to handle multiple use cases (e.g., different banners for different contexts).
+
+### URL Format
+
+```
+/i/{tree_uuid}/{optional-slug}/{variable-slug}
+/r/{tree_uuid}/{optional-slug}/{variable-slug}
+```
+
+Examples:
+- `/i/abc123/campaign/logo` - variable slug is "logo"
+- `/i/abc123/campaign/banner` - variable slug is "banner"
+- `/r/xyz789/email/cta1` - variable slug is "cta1"
+
+### Using in Tree Conditions
+
+When building a tree, use the `slug` field in conditions:
+
+```php
+$tree = $client->trees->create([
+    'name' => 'Multi-Banner Campaign',
+    'type' => 'image',
+    'tree_data' => [
+        'root' => [
+            'id' => 'node_1',
+            'type' => 'condition',
+            'criteria' => [
+                'field' => 'slug',        // Use the variable slug
+                'operator' => 'equals',
+                'value' => 'logo',
+            ],
+            'true_branch' => [
+                'type' => 'output',
+                'id' => 'logo_output',
+                'image_id' => 'logo-image-uuid',
+            ],
+            'false_branch' => [
+                'id' => 'node_2',
+                'type' => 'condition',
+                'criteria' => [
+                    'field' => 'slug',
+                    'operator' => 'equals',
+                    'value' => 'banner',
+                ],
+                'true_branch' => [
+                    'type' => 'output',
+                    'id' => 'banner_output',
+                    'image_id' => 'banner-image-uuid',
+                ],
+                'false_branch' => [
+                    'type' => 'output',
+                    'id' => 'default_output',
+                    'image_id' => 'default-image-uuid',
+                ],
+            ],
+        ],
+    ],
+]);
+
+// Use the same tree for different images
+$logoUrl = $tree->getImageUrl() . '/campaign/logo';
+$bannerUrl = $tree->getImageUrl() . '/campaign/banner';
+```
+
+### Testing Variable Slugs
+
+```php
+// Test tree with different slugs
+$result = $client->trees->test($treeId, [
+    'slug' => 'logo',
+]);
+echo "Logo output: " . $result['output']['image_id'] . "\n";
+
+$result = $client->trees->test($treeId, [
+    'slug' => 'banner',
+]);
+echo "Banner output: " . $result['output']['image_id'] . "\n";
+
+// Or use ephemeral links for browser testing
+$link = $client->ephemeralLinks->createImageLink($treeId);
+echo "Test logo: " . $link->getUrlWithSlug('logo') . "\n";
+echo "Test banner: " . $link->getUrlWithSlug('banner') . "\n";
+```
+
 ## Account
 
 Manage your account settings and monitor usage.
